@@ -1,0 +1,244 @@
+.signin-form-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+  animation: signinFadeUp 0.35s ease both;
+}
+
+@keyframes signinFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.signin-form-card {
+  width: 100%;
+  max-width: 440px;
+  border-radius: 20px;
+  padding: 36px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Brand */
+.signin-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.signin-brand .brand-logo {
+  width: 45px;
+}
+
+/* Headings */
+.signin-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 4px;
+  text-align: center;
+  letter-spacing: -0.02em;
+  cursor: default;
+}
+
+.signin-subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+  text-align: center;
+  line-height: 1.5;
+  cursor: default;
+}
+
+/* API error */
+.signin-api-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Form */
+.signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.signin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.signin-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.signin-field input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background-color: var(--active-soft-blue);
+  color: var(--text-main);
+  font-size: 13.5px;
+  font-family: "Geist", sans-serif;
+  font-weight: 500;
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.signin-field input::placeholder {
+  color: #b0bec5;
+  font-weight: 400;
+}
+
+.signin-field input:focus {
+  border-color: var(--primary-blue);
+  background-color: var(--secondary-background);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.signin-field--error input {
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+
+.signin-error {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+/* Password wrapper */
+.signin-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.signin-password-wrap input {
+  padding-right: 42px;
+}
+
+.signin-password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.signin-password-toggle:hover {
+  color: var(--primary-blue);
+}
+
+/* Submit */
+.signin-submit-btn {
+  width: 100%;
+  height: 44px;
+  background-color: var(--primary-blue);
+  color: var(--text-white);
+  border: none;
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: "Geist", sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    background-color 0.15s ease,
+    transform 0.12s ease;
+}
+
+.signin-submit-btn:hover:not(:disabled) {
+  background-color: var(--hover-blue);
+}
+
+.signin-submit-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.signin-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.signin-spinner {
+  animation: signinSpin 0.8s linear infinite;
+}
+
+@keyframes signinSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Switch */
+.signin-switch {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 4px 0 0;
+  cursor: default;
+}
+
+.signin-switch a {
+  color: var(--primary-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.signin-switch a:hover {
+  color: var(--hover-blue);
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .signin-form-card {
+    padding: 28px 20px 24px;
+  }
+  .signin-title {
+    font-size: 19px;
+  }
+}
