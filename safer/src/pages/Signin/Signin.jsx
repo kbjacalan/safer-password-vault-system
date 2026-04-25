@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import Logo from "../../assets/logo.png";
+import { signin, saveSession } from "../../utils/api";
 import "./Signin.css";
 
 /* Component */
 const Signin = () => {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -35,18 +38,31 @@ const Signin = () => {
     return errs;
   };
 
-  /* Submit (UI-only — wire up your API here) */
-  const handleSubmit = (e) => {
+  /* Submit — calls Go backend */
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError("");
+
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
+
     setLoading(true);
-    /* TODO: replace timeout with your real API call */
-    setTimeout(() => setLoading(false), 1800);
+    try {
+      const data = await signin({
+        email: form.email.trim(),
+        password: form.password,
+      });
+
+      saveSession(data); // persist token + user
+      navigate("/my-vault"); // redirect on success
+    } catch (err) {
+      setApiError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* Render */

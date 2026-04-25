@@ -1,31 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Check, AlertCircle } from "lucide-react";
 import Logo from "../../assets/logo.png";
+import { calcStrength } from "../../utils/passwordUtils";
+import { signup, saveSession } from "../../utils/api";
 import "./Signup.css";
 
 /* Password strength helpers */
 const STRENGTH_LABELS = ["Too weak", "Weak", "Fair", "Strong", "Vault-ready"];
 const STRENGTH_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#2563eb"];
 
-const calcStrength = (pw) => {
-  let score = 0;
-  const checks = {
-    length: pw.length >= 8,
-    upper: /[A-Z]/.test(pw),
-    number: /[0-9]/.test(pw),
-    symbol: /[^A-Za-z0-9]/.test(pw),
-  };
-  if (pw.length >= 6) score++;
-  if (checks.length) score++;
-  if (checks.upper) score++;
-  if (checks.number) score++;
-  if (checks.symbol) score++;
-  return { score: Math.min(score, 4), checks };
-};
-
 /* Component */
 const Signup = () => {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -69,18 +57,33 @@ const Signup = () => {
     return errs;
   };
 
-  /* Submit (UI-only — wire up your API here) */
-  const handleSubmit = (e) => {
+  /* Submit — calls Go backend */
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError("");
+
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
+
     setLoading(true);
-    /* TODO: replace timeout with your real API call */
-    setTimeout(() => setLoading(false), 1800);
+    try {
+      const data = await signup({
+        first_name: form.first_name.trim(),
+        last_name: form.last_name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+      });
+
+      saveSession(data); // persist token + user
+      navigate("/my-vault"); // redirect on success
+    } catch (err) {
+      setApiError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* Render */
@@ -94,7 +97,7 @@ const Signup = () => {
 
         <h2 className="signup-title">Create your account</h2>
         <p className="signup-subtitle">
-          Secure your passwords with Safer — encrypted, zero-knowledge vault.
+          Join Safer and keep every password protected in one secure vault.
         </p>
 
         {/* API error */}

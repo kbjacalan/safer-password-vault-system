@@ -13,36 +13,13 @@ import {
   FileText,
 } from "lucide-react";
 import { useSidebar } from "../../providers/SidebarProvider";
+import { calcStrength, generatePassword } from "../../utils/passwordUtils";
+import { createVaultEntry } from "../../utils/api";
 import "./AddPassword.css";
 
 const CATEGORIES = ["Personal", "Work", "Dev", "Social", "Finance", "Other"];
-
 const STRENGTH_LABELS = ["Too weak", "Weak", "Fair", "Strong", "Vault-ready"];
 const STRENGTH_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#2563eb"];
-
-const calcStrength = (pw) => {
-  let score = 0;
-  const checks = {
-    length: pw.length >= 8,
-    upper: /[A-Z]/.test(pw),
-    number: /[0-9]/.test(pw),
-    symbol: /[^A-Za-z0-9]/.test(pw),
-  };
-  if (pw.length >= 6) score++;
-  if (checks.length) score++;
-  if (checks.upper) score++;
-  if (checks.number) score++;
-  if (checks.symbol) score++;
-  return { score: Math.min(score, 4), checks };
-};
-
-const generatePassword = () => {
-  const chars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-  return Array.from({ length: 16 }, () =>
-    chars.charAt(Math.floor(Math.random() * chars.length)),
-  ).join("");
-};
 
 const AddPassword = () => {
   const navigate = useNavigate();
@@ -59,6 +36,7 @@ const AddPassword = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const strength = calcStrength(form.password);
 
@@ -84,19 +62,35 @@ const AddPassword = () => {
     return errs;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setApiError("");
+
+    try {
+      await createVaultEntry({
+        site_name: form.site,
+        site_url: form.url,
+        username: form.username,
+        password: form.password,
+        category: form.category,
+        strength_score: strength.score,
+        notes: form.notes,
+      });
+
       setSaved(true);
       setTimeout(() => navigate("/my-vault"), 1000);
-    }, 1500);
+    } catch (err) {
+      setApiError(err.message || "Failed to save. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -117,6 +111,8 @@ const AddPassword = () => {
         </div>
 
         <form className="addpw-form" onSubmit={handleSubmit} noValidate>
+          {apiError && <div className="addpw-api-error">{apiError}</div>}
+
           {/* Site name */}
           <div
             className={`addpw-field ${errors.site ? "addpw-field--error" : ""}`}

@@ -1,15 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Bell,
-  Search,
-  ChevronDown,
-  Settings,
-  X,
-  User,
-  LogOut,
-} from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 import { useSidebar } from "../../providers/SidebarProvider";
+import { clearSession } from "../../utils/api";
 import "./Topbar.css";
 
 const PAGE_TITLES = {
@@ -18,7 +11,6 @@ const PAGE_TITLES = {
 };
 
 const Topbar = () => {
-  const [searchOpen, setSearchOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { isOpen: sidebarOpen } = useSidebar();
   const { pathname } = useLocation();
@@ -26,6 +18,13 @@ const Topbar = () => {
   const dropdownRef = useRef(null);
 
   const pageTitle = PAGE_TITLES[pathname] ?? "Safer";
+
+  const user = JSON.parse(localStorage.getItem("safer_user") || "{}");
+  const displayName = user.first_name
+    ? `${user.first_name} ${user.last_name ?? ""}`.trim()
+    : "User";
+  const avatarInitial = user.first_name?.[0]?.toUpperCase() ?? "U";
+  const email = user.email ?? "";
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -43,6 +42,7 @@ const Topbar = () => {
   }, [pathname]);
 
   const handleLogout = () => {
+    clearSession();
     setDropdownOpen(false);
     navigate("/");
   };
@@ -60,9 +60,9 @@ const Topbar = () => {
               className={`topbar-user ${dropdownOpen ? "topbar-user--active" : ""}`}
               onClick={() => setDropdownOpen((p) => !p)}
             >
-              <div className="topbar-user-avatar">U</div>
+              <div className="topbar-user-avatar">{avatarInitial}</div>
               <div className="topbar-user-info">
-                <span className="topbar-user-name">User</span>
+                <span className="topbar-user-name">{displayName}</span>
                 <span className="topbar-user-role">Member</span>
               </div>
               <span
@@ -75,12 +75,10 @@ const Topbar = () => {
             {dropdownOpen && (
               <div className="topbar-dropdown">
                 <div className="topbar-dropdown-header">
-                  <div className="topbar-dropdown-avatar">U</div>
+                  <div className="topbar-dropdown-avatar">{avatarInitial}</div>
                   <div className="topbar-dropdown-user-info">
-                    <span className="topbar-dropdown-name">User</span>
-                    <span className="topbar-dropdown-email">
-                      user@gmail.com
-                    </span>
+                    <span className="topbar-dropdown-name">{displayName}</span>
+                    <span className="topbar-dropdown-email">{email}</span>
                     <span className="topbar-dropdown-role-badge">Member</span>
                   </div>
                 </div>

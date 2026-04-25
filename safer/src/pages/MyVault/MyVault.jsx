@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Plus,
@@ -13,75 +13,26 @@ import {
   MoreHorizontal,
   Shield,
   Lock,
+  Loader2,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useSidebar } from "../../providers/SidebarProvider";
+import {
+  fetchVaultEntries,
+  deleteVaultEntry,
+  toggleFavorite,
+} from "../../utils/api";
 import "./MyVault.css";
 
-const MOCK_PASSWORDS = [
-  {
-    id: 1,
-    site: "Google",
-    url: "google.com",
-    username: "bryan.jacalan@gmail.com",
-    password: "Goog!e2024#",
-    category: "Work",
-    favorited: true,
-    strength: 4,
-  },
-  {
-    id: 2,
-    site: "GitHub",
-    url: "github.com",
-    username: "bryanjacalan",
-    password: "G!tHub$ecure99",
-    category: "Dev",
-    favorited: true,
-    strength: 4,
-  },
-  {
-    id: 3,
-    site: "Netflix",
-    url: "netflix.com",
-    username: "bryan@gmail.com",
-    password: "Netfl1x!pass",
-    category: "Personal",
-    favorited: false,
-    strength: 3,
-  },
-  {
-    id: 4,
-    site: "Twitter",
-    url: "twitter.com",
-    username: "@bryanjacalan",
-    password: "tw1tter2024",
-    category: "Social",
-    favorited: false,
-    strength: 2,
-  },
-  {
-    id: 5,
-    site: "AWS Console",
-    url: "aws.amazon.com",
-    username: "bryan.jacalan@work.com",
-    password: "AWSs3cur3!Key#2024",
-    category: "Work",
-    favorited: true,
-    strength: 4,
-  },
-  {
-    id: 6,
-    site: "Figma",
-    url: "figma.com",
-    username: "bryan@gmail.com",
-    password: "F!gmaDesign1",
-    category: "Dev",
-    favorited: false,
-    strength: 3,
-  },
+const CATEGORIES = [
+  "All",
+  "Work",
+  "Personal",
+  "Dev",
+  "Social",
+  "Finance",
+  "Other",
 ];
-
-const CATEGORIES = ["All", "Work", "Personal", "Dev", "Social"];
-
 const STRENGTH_LABELS = ["", "Weak", "Fair", "Strong", "Vault-ready"];
 const STRENGTH_COLORS = ["", "#f97316", "#eab308", "#22c55e", "#2563eb"];
 
@@ -94,7 +45,7 @@ const PasswordItem = ({ item, onToggleFav, onDelete }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(item.password);
+    navigator.clipboard.writeText(item.encrypted_password);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };
@@ -103,8 +54,8 @@ const PasswordItem = ({ item, onToggleFav, onDelete }) => {
     <div className="vault-item">
       <div className="vault-item-favicon">
         <img
-          src={getFavicon(item.url)}
-          alt={item.site}
+          src={getFavicon(item.site_url)}
+          alt={item.site_name}
           onError={(e) => {
             e.target.style.display = "none";
             e.target.nextSibling.style.display = "flex";
@@ -117,11 +68,11 @@ const PasswordItem = ({ item, onToggleFav, onDelete }) => {
 
       <div className="vault-item-info">
         <div className="vault-item-top">
-          <span className="vault-item-site">{item.site}</span>
+          <span className="vault-item-site">{item.site_name}</span>
           <span
             className="vault-item-strength-dot"
-            style={{ background: STRENGTH_COLORS[item.strength] }}
-            title={STRENGTH_LABELS[item.strength]}
+            style={{ background: STRENGTH_COLORS[item.strength_score] }}
+            title={STRENGTH_LABELS[item.strength_score]}
           />
         </div>
         <span className="vault-item-username">{item.username}</span>
@@ -129,7 +80,7 @@ const PasswordItem = ({ item, onToggleFav, onDelete }) => {
 
       <div className="vault-item-password-wrap">
         <span className="vault-item-password">
-          {visible ? item.password : "••••••••••••"}
+          {visible ? item.encrypted_password : "••••••••••••"}
         </span>
       </div>
 
@@ -150,11 +101,11 @@ const PasswordItem = ({ item, onToggleFav, onDelete }) => {
           {copied && <span className="vault-copy-toast">Copied!</span>}
         </button>
         <button
-          className={`vault-action-btn ${item.favorited ? "vault-action-btn--fav" : ""}`}
+          className={`vault-action-btn ${item.is_favorited ? "vault-action-btn--fav" : ""}`}
           onClick={() => onToggleFav(item.id)}
-          aria-label={item.favorited ? "Unfavorite" : "Favorite"}
+          aria-label={item.is_favorited ? "Unfavorite" : "Favorite"}
         >
-          {item.favorited ? <Star size={15} /> : <StarOff size={15} />}
+          {item.is_favorited ? <Star size={15} /> : <StarOff size={15} />}
         </button>
         <div className="vault-menu-wrap">
           <button
@@ -186,31 +137,69 @@ const PasswordItem = ({ item, onToggleFav, onDelete }) => {
 
 const MyVault = () => {
   const { isOpen: sidebarOpen } = useSidebar();
-  const [passwords, setPasswords] = useState(MOCK_PASSWORDS);
+  const navigate = useNavigate();
+  const [passwords, setPasswords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [showFavs, setShowFavs] = useState(false);
 
-  const handleToggleFav = (id) =>
-    setPasswords((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, favorited: !p.favorited } : p)),
-    );
+  // Fetch entries on mount
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const entries = await fetchVaultEntries();
+        setPasswords(entries);
+      } catch (err) {
+        setError(err.message || "Failed to load vault");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
-  const handleDelete = (id) =>
+  const handleToggleFav = async (id) => {
+    // Optimistic update
+    setPasswords((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, is_favorited: !p.is_favorited } : p,
+      ),
+    );
+    try {
+      await toggleFavorite(id);
+    } catch {
+      // Revert on failure
+      setPasswords((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...p, is_favorited: !p.is_favorited } : p,
+        ),
+      );
+    }
+  };
+
+  const handleDelete = async (id) => {
     setPasswords((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await deleteVaultEntry(id);
+    } catch {
+      // Could restore the item here if needed
+    }
+  };
 
   const filtered = passwords.filter((p) => {
     const matchSearch =
-      p.site.toLowerCase().includes(search.toLowerCase()) ||
+      p.site_name.toLowerCase().includes(search.toLowerCase()) ||
       p.username.toLowerCase().includes(search.toLowerCase());
     const matchCat = category === "All" || p.category === category;
-    const matchFav = !showFavs || p.favorited;
+    const matchFav = !showFavs || p.is_favorited;
     return matchSearch && matchCat && matchFav;
   });
 
   const totalPasswords = passwords.length;
-  const strongCount = passwords.filter((p) => p.strength >= 3).length;
-  const weakCount = passwords.filter((p) => p.strength <= 2).length;
+  const strongCount = passwords.filter((p) => p.strength_score >= 3).length;
+  const weakCount = passwords.filter((p) => p.strength_score <= 2).length;
 
   return (
     <div
@@ -286,11 +275,26 @@ const MyVault = () => {
       </div>
 
       <div className="vault-list">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="vault-empty">
+            <Loader2 size={28} className="addpw-spinner" />
+            <p>Loading your vault...</p>
+          </div>
+        ) : error ? (
+          <div className="vault-empty">
+            <Key size={32} />
+            <p>Something went wrong</p>
+            <span>{error}</span>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="vault-empty">
             <Key size={32} />
             <p>No passwords found</p>
-            <span>Try adjusting your search or filters</span>
+            <span>
+              {passwords.length === 0
+                ? "Add your first entry using the button above"
+                : "Try adjusting your search or filters"}
+            </span>
           </div>
         ) : (
           filtered.map((item) => (

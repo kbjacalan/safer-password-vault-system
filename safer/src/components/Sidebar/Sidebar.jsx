@@ -1,14 +1,6 @@
 import { useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import {
-  LayoutDashboard,
-  PackageSearch,
-  PackagePlus,
-  ClipboardList,
-  Bell,
-  Menu,
-  Sun,
-} from "lucide-react";
+import { PackageSearch, PackagePlus, Menu } from "lucide-react";
 import { useSidebar } from "../../providers/SidebarProvider";
 import Logo from "../../assets/logo.png";
 import "./Sidebar.css";
@@ -71,7 +63,7 @@ const Sidebar = () => {
         <p className="sidebar-section-label">Main Menu</p>
 
         <nav className="sidebar-nav">
-          {USER_NAV.map(({ to, icon: Icon, label, badge }) => (
+          {USER_NAV.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
@@ -84,7 +76,6 @@ const Sidebar = () => {
                 <Icon size={18} />
               </span>
               <span className="item-label">{label}</span>
-              {badge && <span className="item-badge">{badge}</span>}
             </NavLink>
           ))}
         </nav>

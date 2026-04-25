@@ -258,4 +258,19 @@
     left: 0 !important;
     transition: none;
   }
+
+  .topbar-user-info,
+  .topbar-user-chevron {
+    display: none;
+  }
+  .topbar-user {
+    padding: 5px 6px;
+    border-radius: 20px;
+    border: none;
+    gap: 0;
+  }
+  .topbar-user-avatar {
+    width: 30px;
+    height: 30px;
+  }
 }
