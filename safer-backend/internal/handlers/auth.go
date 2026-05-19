@@ -40,8 +40,8 @@ type errorResponse struct {
 // ── AuthHandler ───────────────────────────────────────────────────────────────
 
 type AuthHandler struct {
-	DB            *sql.DB
-	JWTSecret     string
+	DB             *sql.DB
+	JWTSecret      string
 	JWTExpiryHours int
 }
 
@@ -109,7 +109,7 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Insert user
+	// Insert user — role defaults to 'user' via DB default
 	result, err := h.DB.ExecContext(r.Context(),
 		"INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)",
 		req.FirstName, req.LastName, req.Email, string(hash),
@@ -126,11 +126,12 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Email:     req.Email,
+		Role:      "user",
 	}
 
 	// Generate JWT
 	token, err := jwt.Generate(user.ID, user.Email, user.FirstName, user.LastName,
-		h.JWTSecret, h.JWTExpiryHours)
+		user.Role, h.JWTSecret, h.JWTExpiryHours)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to generate token")
 		return
@@ -159,12 +160,12 @@ func (h *AuthHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch user
+	// Fetch user — include role
 	var user models.User
 	err := h.DB.QueryRowContext(r.Context(),
-		"SELECT id, first_name, last_name, email, password_hash FROM users WHERE email = ?",
+		"SELECT id, first_name, last_name, email, password_hash, role FROM users WHERE email = ?",
 		req.Email,
-	).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.PasswordHash)
+	).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.PasswordHash, &user.Role)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		writeError(w, http.StatusUnauthorized, "Invalid email or password")
@@ -181,9 +182,9 @@ func (h *AuthHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate JWT
+	// Generate JWT — role is now embedded in the token
 	token, err := jwt.Generate(user.ID, user.Email, user.FirstName, user.LastName,
-		h.JWTSecret, h.JWTExpiryHours)
+		user.Role, h.JWTSecret, h.JWTExpiryHours)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to generate token")
 		return

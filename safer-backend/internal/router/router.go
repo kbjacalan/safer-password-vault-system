@@ -51,6 +51,18 @@ func New(db *sql.DB, jwtSecret string, jwtExpiry int) http.Handler {
 		r.Patch("/{id}/favorite", vault.ToggleFavorite)
 	})
 
+	// ── Admin routes ───────────────────────────────────────────────────────────
+	admin := &handlers.AdminHandler{
+		DB:        db,
+		JWTSecret: jwtSecret,
+	}
+
+	r.Route("/api/admin", func(r chi.Router) {
+		r.Use(admin.RequireAdmin)
+		r.Get("/users", admin.ListUsers)
+		r.Delete("/users/{id}", admin.DeleteUser)
+	})
+
 	// ── Health check ───────────────────────────────────────────────────────────
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

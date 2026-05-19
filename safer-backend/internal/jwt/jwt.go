@@ -12,15 +12,17 @@ type Claims struct {
 	Email     string `json:"email"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
+	Role      string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func Generate(userID int, email, firstName, lastName, secret string, expiryHours int) (string, error) {
+func Generate(userID int, email, firstName, lastName, role, secret string, expiryHours int) (string, error) {
 	claims := Claims{
 		UserID:    userID,
 		Email:     email,
 		FirstName: firstName,
 		LastName:  lastName,
+		Role:      role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(expiryHours) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

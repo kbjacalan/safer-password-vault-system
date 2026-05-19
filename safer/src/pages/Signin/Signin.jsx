@@ -56,8 +56,8 @@ const Signin = () => {
         password: form.password,
       });
 
-      saveSession(data); // persist token + user
-      navigate("/my-vault"); // redirect on success
+      saveSession(data);
+      navigate(data.user.role === "admin" ? "/admin/users" : "/my-vault");
     } catch (err) {
       setApiError(err.message || "Something went wrong. Please try again.");
     } finally {
