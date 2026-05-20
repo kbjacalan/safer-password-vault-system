@@ -1,6 +1,12 @@
 import { useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { PackageSearch, PackagePlus, Trash2, Menu } from "lucide-react";
+import {
+  PackageSearch,
+  PackagePlus,
+  Trash2,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
 import { useSidebar } from "../../providers/SidebarProvider";
 import Logo from "../../assets/logo.png";
 import "./Sidebar.css";
@@ -44,7 +50,7 @@ const Sidebar = () => {
         onClick={toggle}
         aria-label={isOpen ? "Close menu" : "Open menu"}
       >
-        <Menu size={18} />
+        {isOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
       </button>
 
       <aside
