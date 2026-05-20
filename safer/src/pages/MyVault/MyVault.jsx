@@ -17,6 +17,10 @@ import {
   Loader2,
   RefreshCw,
   KeyRound,
+  StickyNote,
+  Pencil,
+  ArrowUpDown,
+  ChevronDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebar } from "../../providers/SidebarProvider";
@@ -25,8 +29,10 @@ import {
   deleteVaultEntry,
   toggleFavorite,
   updateVaultPassword,
+  updateVaultNotes,
 } from "../../utils/api";
 import { calcStrength, generatePassword } from "../../utils/passwordUtils";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import "./MyVault.css";
 
 const CATEGORIES = [
@@ -38,16 +44,44 @@ const CATEGORIES = [
   "Finance",
   "Other",
 ];
+
+const SORT_OPTIONS = [
+  { key: "newest", label: "Newest First" },
+  { key: "oldest", label: "Oldest First" },
+  { key: "name-asc", label: "Name (A→Z)" },
+  { key: "name-desc", label: "Name (Z→A)" },
+  { key: "strength-desc", label: "Strongest First" },
+  { key: "strength-asc", label: "Weakest First" },
+];
 const STRENGTH_LABELS = ["", "Weak", "Fair", "Strong", "Vault-ready"];
 const STRENGTH_COLORS = ["", "#f97316", "#eab308", "#22c55e", "#2563eb"];
 
 const getFavicon = (url) =>
   `https://www.google.com/s2/favicons?domain=${url}&sz=32`;
 
-const PasswordItem = ({ item, onToggleFav, onDelete, onPasswordChanged }) => {
+const PasswordItem = ({
+  item,
+  onToggleFav,
+  onDelete,
+  onPasswordChanged,
+  onNotesChanged,
+}) => {
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
 
   // Change password modal state
   const [changingPw, setChangingPw] = useState(false);
@@ -55,6 +89,17 @@ const PasswordItem = ({ item, onToggleFav, onDelete, onPasswordChanged }) => {
   const [showNewPw, setShowNewPw] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
   const [pwError, setPwError] = useState("");
+
+  // Delete confirm modal state
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Notes state
+  const [showNotes, setShowNotes] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState("");
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesError, setNotesError] = useState("");
 
   const strength = calcStrength(newPassword);
 
@@ -70,6 +115,16 @@ const PasswordItem = ({ item, onToggleFav, onDelete, onPasswordChanged }) => {
     setShowNewPw(false);
     setPwError("");
     setChangingPw(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setDeleting(true);
+    try {
+      await onDelete(item.id);
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
   };
 
   const handleGenerate = () => {
@@ -98,6 +153,27 @@ const PasswordItem = ({ item, onToggleFav, onDelete, onPasswordChanged }) => {
       setPwError(err.message || "Failed to update password");
     } finally {
       setPwSaving(false);
+    }
+  };
+
+  const openEditNotes = () => {
+    setNotesDraft(item.notes || "");
+    setNotesError("");
+    setEditingNotes(true);
+  };
+
+  const handleSaveNotes = async () => {
+    setNotesSaving(true);
+    setNotesError("");
+    try {
+      await updateVaultNotes(item.id, notesDraft);
+      onNotesChanged(item.id, notesDraft);
+      setEditingNotes(false);
+      toast.success("Notes saved");
+    } catch (err) {
+      setNotesError(err.message || "Failed to save notes");
+    } finally {
+      setNotesSaving(false);
     }
   };
 
@@ -159,9 +235,28 @@ const PasswordItem = ({ item, onToggleFav, onDelete, onPasswordChanged }) => {
           >
             {item.is_favorited ? <Star size={15} /> : <StarOff size={15} />}
           </button>
-          <div className="vault-menu-wrap">
+          <button
+            className={`vault-action-btn ${showNotes ? "vault-action-btn--notes-active" : ""}`}
+            onClick={() => {
+              if (!showNotes) {
+                setShowNotes(true);
+                if (!item.notes) {
+                  setNotesDraft("");
+                  setNotesError("");
+                  setEditingNotes(true);
+                }
+              } else {
+                setShowNotes(false);
+                setEditingNotes(false);
+              }
+            }}
+            aria-label={showNotes ? "Hide notes" : "Show notes"}
+          >
+            <StickyNote size={15} />
+          </button>
+          <div className="vault-menu-wrap" ref={menuRef}>
             <button
-              className="vault-action-btn"
+              className={`vault-action-btn ${menuOpen ? "vault-action-btn--menu-active" : ""}`}
               onClick={() => setMenuOpen((p) => !p)}
               aria-label="More options"
             >
@@ -180,7 +275,7 @@ const PasswordItem = ({ item, onToggleFav, onDelete, onPasswordChanged }) => {
                   className="vault-menu-item vault-menu-item--danger"
                   onClick={() => {
                     setMenuOpen(false);
-                    onDelete(item.id);
+                    setDeleteOpen(true);
                   }}
                 >
                   <Trash2 size={13} />
@@ -191,6 +286,77 @@ const PasswordItem = ({ item, onToggleFav, onDelete, onPasswordChanged }) => {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={deleteOpen}
+        title="Delete entry?"
+        message={`"${item.site_name}" will be moved to Trash. You can restore it later.`}
+        confirmLabel="Move to Trash"
+        variant="danger"
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteOpen(false)}
+      />
+
+      {showNotes && (item.notes || editingNotes) && (
+        <div className="vault-notes-card">
+          <div className="vault-notes-header">
+            <StickyNote size={13} />
+            <span>Notes</span>
+            {!editingNotes && (
+              <button
+                className="vault-notes-edit-btn"
+                onClick={openEditNotes}
+                aria-label="Edit notes"
+              >
+                <Pencil size={12} />
+                <span>Edit</span>
+              </button>
+            )}
+          </div>
+
+          {editingNotes ? (
+            <>
+              <textarea
+                className="vault-notes-textarea"
+                value={notesDraft}
+                onChange={(e) => {
+                  setNotesDraft(e.target.value);
+                  setNotesError("");
+                }}
+                placeholder="Add a note…"
+                rows={3}
+                autoFocus
+              />
+              {notesError && <p className="vault-notes-error">{notesError}</p>}
+              <div className="vault-notes-actions">
+                <button
+                  className="vault-notes-cancel"
+                  onClick={() => {
+                    setEditingNotes(false);
+                    if (!item.notes) setShowNotes(false);
+                  }}
+                  disabled={notesSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="vault-notes-save"
+                  onClick={handleSaveNotes}
+                  disabled={notesSaving}
+                >
+                  {notesSaving && (
+                    <Loader2 size={12} className="vault-notes-spinner" />
+                  )}
+                  {notesSaving ? "Saving…" : "Save Notes"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="vault-notes-body">{item.notes}</p>
+          )}
+        </div>
+      )}
 
       {changingPw && (
         <div className="vault-changepw-card">
@@ -287,6 +453,28 @@ const MyVault = () => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [showFavs, setShowFavs] = useState(false);
+  const [sortBy, setSortBy] = useState(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem("safer_user"));
+      return localStorage.getItem(`vault-sort:${user.id}`) || "newest";
+    } catch {
+      return "newest";
+    }
+  });
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
+
+  // Close sort dropdown on outside click
+  useEffect(() => {
+    if (!sortOpen) return;
+    const handler = (e) => {
+      if (sortRef.current && !sortRef.current.contains(e.target)) {
+        setSortOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [sortOpen]);
 
   // Fetch entries on mount
   useEffect(() => {
@@ -355,14 +543,39 @@ const MyVault = () => {
     );
   };
 
-  const filtered = passwords.filter((p) => {
-    const matchSearch =
-      p.site_name.toLowerCase().includes(search.toLowerCase()) ||
-      p.username.toLowerCase().includes(search.toLowerCase());
-    const matchCat = category === "All" || p.category === category;
-    const matchFav = !showFavs || p.is_favorited;
-    return matchSearch && matchCat && matchFav;
-  });
+  const handleNotesChanged = (id, notes) => {
+    setPasswords((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, notes } : p)),
+    );
+  };
+
+  const filtered = passwords
+    .filter((p) => {
+      const matchSearch =
+        p.site_name.toLowerCase().includes(search.toLowerCase()) ||
+        p.username.toLowerCase().includes(search.toLowerCase());
+      const matchCat = category === "All" || p.category === category;
+      const matchFav = !showFavs || p.is_favorited;
+      return matchSearch && matchCat && matchFav;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "name-asc":
+          return a.site_name.localeCompare(b.site_name);
+        case "name-desc":
+          return b.site_name.localeCompare(a.site_name);
+        case "strength-desc":
+          return b.strength_score - a.strength_score;
+        case "strength-asc":
+          return a.strength_score - b.strength_score;
+        case "newest":
+          return b.id - a.id;
+        case "oldest":
+          return a.id - b.id;
+        default:
+          return 0;
+      }
+    });
 
   const totalPasswords = passwords.length;
   const strongCount = passwords.filter((p) => p.strength_score >= 3).length;
@@ -425,13 +638,54 @@ const MyVault = () => {
               </button>
             ))}
           </div>
-          <button
-            className={`vault-fav-toggle ${showFavs ? "vault-fav-toggle--active" : ""}`}
-            onClick={() => setShowFavs((p) => !p)}
-          >
-            <Star size={13} />
-            <span>Favorites</span>
-          </button>
+          <div className="vault-filters-right">
+            <div className="vault-sort-wrap" ref={sortRef}>
+              <button
+                className={`vault-sort-btn ${sortOpen ? "vault-sort-btn--open" : ""}`}
+                onClick={() => setSortOpen((p) => !p)}
+                title={SORT_OPTIONS.find((o) => o.key === sortBy)?.label}
+              >
+                <ArrowUpDown size={13} />
+                <span>{SORT_OPTIONS.find((o) => o.key === sortBy)?.label}</span>
+                <ChevronDown
+                  size={12}
+                  className={`vault-sort-chevron ${sortOpen ? "vault-sort-chevron--open" : ""}`}
+                />
+              </button>
+              {sortOpen && (
+                <div className="vault-sort-dropdown">
+                  {SORT_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.key}
+                      className={`vault-sort-option ${sortBy === opt.key ? "vault-sort-option--active" : ""}`}
+                      onClick={() => {
+                        try {
+                          const user = JSON.parse(
+                            localStorage.getItem("safer_user"),
+                          );
+                          localStorage.setItem(
+                            `vault-sort:${user.id}`,
+                            opt.key,
+                          );
+                        } catch {}
+                        setSortBy(opt.key);
+                        setSortOpen(false);
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button
+              className={`vault-fav-toggle ${showFavs ? "vault-fav-toggle--active" : ""}`}
+              onClick={() => setShowFavs((p) => !p)}
+            >
+              <Star size={13} />
+              <span>Favorites</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -471,6 +725,7 @@ const MyVault = () => {
               onToggleFav={handleToggleFav}
               onDelete={handleDelete}
               onPasswordChanged={handlePasswordChanged}
+              onNotesChanged={handleNotesChanged}
             />
           ))
         )}

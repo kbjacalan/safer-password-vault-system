@@ -365,6 +365,51 @@ func (h *VaultHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "Password updated"})
 }
 
+// ── PATCH /api/vault/{id}/notes ──────────────────────────────────────────────
+
+type updateNotesRequest struct {
+	Notes string `json:"notes"`
+}
+
+func (h *VaultHandler) UpdateNotes(w http.ResponseWriter, r *http.Request) {
+	userID, err := h.getUserID(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	entryID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid entry ID")
+		return
+	}
+
+	var req updateNotesRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	result, err := h.DB.ExecContext(r.Context(),
+		`UPDATE vault_entries
+		 SET notes = ?, updated_at = CURRENT_TIMESTAMP
+		 WHERE id = ? AND user_id = ?`,
+		strings.TrimSpace(req.Notes), entryID, userID,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to update notes")
+		return
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		writeError(w, http.StatusNotFound, "Entry not found")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Notes updated"})
+}
+
 // ── PATCH /api/vault/{id}/favorite ───────────────────────────────────────────
 
 func (h *VaultHandler) ToggleFavorite(w http.ResponseWriter, r *http.Request) {

@@ -98,6 +98,17 @@ export async function updateVaultPassword(id, { password, strength_score }) {
   return json;
 }
 
+export async function updateVaultNotes(id, notes) {
+  const res = await fetch(`${API_BASE}/api/vault/${id}/notes`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ notes }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "Failed to update notes");
+  return json;
+}
+
 export async function fetchTrashedEntries() {
   const res = await fetch(`${API_BASE}/api/vault/trash`, {
     headers: authHeaders(),

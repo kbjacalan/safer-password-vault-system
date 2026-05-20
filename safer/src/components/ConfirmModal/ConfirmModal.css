@@ -1,0 +1,180 @@
+/* Backdrop */
+.cm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: cm-backdrop-in 0.15s ease;
+}
+
+@keyframes cm-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Dialog */
+.cm-dialog {
+  background-color: var(--secondary-background);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+  padding: 28px 24px 24px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: cm-dialog-in 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cm-dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.93) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Icon */
+.cm-icon-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cm-icon-wrap--danger {
+  background-color: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+}
+
+.cm-icon-wrap--primary {
+  background-color: var(--soft-blue);
+  color: var(--primary-blue);
+  border: 1px solid var(--light-blue);
+}
+
+/* Body */
+.cm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cm-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.cm-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Actions */
+.cm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.cm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Cancel */
+.cm-btn--cancel {
+  background-color: var(--main-background);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+.cm-btn--cancel:hover:not(:disabled) {
+  background-color: var(--active-soft-blue);
+  color: var(--text-main);
+  border-color: var(--light-blue);
+}
+
+/* Confirm — danger */
+.cm-btn--confirm.cm-btn--danger {
+  background-color: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.cm-btn--confirm.cm-btn--danger:hover:not(:disabled) {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Confirm — primary */
+.cm-btn--confirm.cm-btn--primary {
+  background-color: var(--primary-blue);
+  color: var(--text-white);
+  border-color: var(--primary-blue);
+}
+
+.cm-btn--confirm.cm-btn--primary:hover:not(:disabled) {
+  background-color: var(--hover-blue);
+  border-color: var(--hover-blue);
+}
+
+/* Spinner */
+.cm-spinner {
+  animation: cm-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes cm-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -7,6 +7,7 @@ import {
   restoreVaultEntry,
   purgeVaultEntry,
 } from "../../utils/api";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import "./Trash.css";
 
 const getFavicon = (url) =>
@@ -15,6 +16,10 @@ const getFavicon = (url) =>
 const TrashItem = ({ item, onRestore, onPurge }) => {
   const [restoring, setRestoring] = useState(false);
   const [purging, setPurging] = useState(false);
+
+  // Modal state
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [purgeOpen, setPurgeOpen] = useState(false);
 
   const handleRestore = async () => {
     setRestoring(true);
@@ -26,6 +31,7 @@ const TrashItem = ({ item, onRestore, onPurge }) => {
       toast.error(err.message || "Failed to restore entry");
     } finally {
       setRestoring(false);
+      setRestoreOpen(false);
     }
   };
 
@@ -39,57 +45,74 @@ const TrashItem = ({ item, onRestore, onPurge }) => {
       toast.error(err.message || "Failed to delete entry");
     } finally {
       setPurging(false);
+      setPurgeOpen(false);
     }
   };
 
   return (
-    <div className="trash-item">
-      <div className="trash-item-favicon">
-        <img
-          src={getFavicon(item.site_url)}
-          alt={item.site_name}
-          onError={(e) => {
-            e.target.style.display = "none";
-            e.target.nextSibling.style.display = "flex";
-          }}
-        />
-        <span className="trash-item-favicon-fallback">
-          <Globe size={16} />
-        </span>
-      </div>
+    <>
+      <div className="trash-item">
+        <div className="trash-item-favicon">
+          <img
+            src={getFavicon(item.site_url)}
+            alt={item.site_name}
+            onError={(e) => {
+              e.target.style.display = "none";
+              e.target.nextSibling.style.display = "flex";
+            }}
+          />
+          <span className="trash-item-favicon-fallback">
+            <Globe size={16} />
+          </span>
+        </div>
 
-      <div className="trash-item-info">
-        <span className="trash-item-site">{item.site_name}</span>
-        <span className="trash-item-username">{item.username}</span>
-      </div>
+        <div className="trash-item-info">
+          <span className="trash-item-site">{item.site_name}</span>
+          <span className="trash-item-username">{item.username}</span>
+        </div>
 
-      <div className="trash-item-actions">
-        <button
-          className="trash-btn trash-btn--restore"
-          onClick={handleRestore}
-          disabled={restoring || purging}
-        >
-          {restoring ? (
-            <Loader2 size={13} className="trash-spinner" />
-          ) : (
+        <div className="trash-item-actions">
+          <button
+            className="trash-btn trash-btn--restore"
+            onClick={() => setRestoreOpen(true)}
+            disabled={restoring || purging}
+          >
             <RotateCcw size={13} />
-          )}
-          <span>Restore</span>
-        </button>
-        <button
-          className="trash-btn trash-btn--purge"
-          onClick={handlePurge}
-          disabled={restoring || purging}
-        >
-          {purging ? (
-            <Loader2 size={13} className="trash-spinner" />
-          ) : (
+            <span>Restore</span>
+          </button>
+          <button
+            className="trash-btn trash-btn--purge"
+            onClick={() => setPurgeOpen(true)}
+            disabled={restoring || purging}
+          >
             <Trash2 size={13} />
-          )}
-          <span>Delete Forever</span>
-        </button>
+            <span>Delete Forever</span>
+          </button>
+        </div>
       </div>
-    </div>
+
+      <ConfirmModal
+        isOpen={restoreOpen}
+        title="Restore entry?"
+        message={`"${item.site_name}" will be moved back to your vault.`}
+        confirmLabel="Restore"
+        variant="primary"
+        loading={restoring}
+        onConfirm={handleRestore}
+        onCancel={() => setRestoreOpen(false)}
+      />
+
+      <ConfirmModal
+        isOpen={purgeOpen}
+        title="Delete forever?"
+        message={`"${item.site_name}" will be permanently deleted. This cannot be undone.`}
+        confirmLabel="Delete Forever"
+        variant="danger"
+        loading={purging}
+        onConfirm={handlePurge}
+        onCancel={() => setPurgeOpen(false)}
+      />
+    </>
   );
 };
 

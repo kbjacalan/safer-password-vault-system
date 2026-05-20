@@ -151,13 +151,113 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  flex-wrap: wrap;
+}
+
+.vault-filters-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.vault-sort-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.vault-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background-color: var(--secondary-background);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.vault-sort-btn:hover,
+.vault-sort-btn--open {
+  background-color: var(--soft-blue);
+  color: var(--primary-blue);
+  border-color: var(--light-blue);
+}
+
+.vault-sort-chevron {
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.vault-sort-chevron--open {
+  transform: rotate(180deg);
+}
+
+.vault-sort-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  background-color: var(--secondary-background);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  z-index: 100;
+  animation: menuFadeIn 0.15s ease;
+}
+
+.vault-sort-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.vault-sort-option:hover {
+  background-color: var(--soft-blue);
+  color: var(--primary-blue);
+}
+
+.vault-sort-option--active {
+  background-color: var(--soft-blue);
+  color: var(--primary-blue);
+  font-weight: 600;
 }
 
 .vault-categories {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.vault-categories::-webkit-scrollbar {
+  display: none;
 }
 
 .vault-cat-btn {
@@ -170,6 +270,7 @@
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
+  flex-shrink: 0;
   transition:
     background-color 0.15s ease,
     color 0.15s ease,
@@ -374,6 +475,24 @@
 
 .vault-action-btn:hover {
   background-color: var(--soft-blue);
+  color: var(--primary-blue);
+  border-color: var(--light-blue);
+}
+
+.vault-action-btn--fav:hover {
+  background-color: #fefce8;
+  color: #ca8a04;
+  border-color: #fde68a;
+}
+
+.vault-action-btn--notes-active:hover {
+  background-color: #fefce8;
+  color: #ca8a04;
+  border-color: #fde047;
+}
+
+.vault-action-btn--menu-active:hover {
+  background-color: var(--active-soft-blue);
   color: var(--primary-blue);
   border-color: var(--light-blue);
 }
@@ -711,4 +830,177 @@
 .vault-changepw-save:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Notes button active state */
+.vault-action-btn--notes-active {
+  background-color: #fefce8;
+  color: #ca8a04;
+  border-color: #fde047;
+}
+
+/* Notes card */
+.vault-notes-card {
+  background-color: #fefce8;
+  border: 1px solid #fde047;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: addpwFadeIn 0.15s ease;
+}
+
+.vault-notes-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #a16207;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vault-notes-body {
+  font-size: 13px;
+  color: #713f12;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* Notes edit button */
+.vault-notes-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #fde047;
+  background-color: transparent;
+  color: #a16207;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.vault-notes-edit-btn:hover {
+  background-color: #fef08a;
+}
+
+/* Notes textarea */
+.vault-notes-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid #fde047;
+  background-color: #fffde7;
+  color: #713f12;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.vault-notes-textarea:focus {
+  border-color: #ca8a04;
+  box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.12);
+}
+
+.vault-notes-textarea::placeholder {
+  color: #d97706;
+  opacity: 0.6;
+}
+
+/* Notes error */
+.vault-notes-error {
+  font-size: 12px;
+  color: #ef4444;
+  margin: 0;
+}
+
+/* Notes save/cancel actions */
+.vault-notes-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.vault-notes-cancel {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid #fde047;
+  background-color: transparent;
+  color: #a16207;
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.vault-notes-cancel:hover:not(:disabled) {
+  background-color: #fef08a;
+}
+
+.vault-notes-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vault-notes-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: none;
+  background-color: #ca8a04;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.vault-notes-save:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.vault-notes-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vault-notes-spinner {
+  animation:
+    addpwFadeIn 0s,
+    noteSpin 0.7s linear infinite;
+}
+
+@keyframes noteSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 3-dot menu button active state */
+.vault-action-btn--menu-active {
+  background-color: var(--active-soft-blue);
+  color: var(--primary-blue);
+  border-color: var(--light-blue);
 }

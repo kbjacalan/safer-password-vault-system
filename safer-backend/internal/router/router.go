@@ -52,6 +52,7 @@ func New(db *sql.DB, jwtSecret string, jwtExpiry int) http.Handler {
 		r.Patch("/{id}/restore", vault.Restore)
 		r.Delete("/{id}/purge", vault.Purge)
 		r.Patch("/{id}/password", vault.UpdatePassword)
+		r.Patch("/{id}/notes", vault.UpdateNotes)
 		r.Patch("/{id}/favorite", vault.ToggleFavorite)
 	})
 
