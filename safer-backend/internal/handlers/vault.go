@@ -139,7 +139,7 @@ func (h *VaultHandler) List(w http.ResponseWriter, r *http.Request) {
 			COALESCE(ve.notes, ''), ve.created_at, ve.updated_at
 		FROM vault_entries ve
 		JOIN categories c ON c.id = ve.category_id
-		WHERE ve.user_id = ?
+		WHERE ve.user_id = ? AND ve.deleted_at IS NULL
 		ORDER BY ve.created_at DESC`,
 		userID,
 	)
@@ -184,7 +184,7 @@ func (h *VaultHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := h.DB.ExecContext(r.Context(),
-		"DELETE FROM vault_entries WHERE id = ? AND user_id = ?",
+		"UPDATE vault_entries SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
 		entryID, userID,
 	)
 	if err != nil {
@@ -199,6 +199,170 @@ func (h *VaultHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "Entry deleted"})
+}
+
+// ── PATCH /api/vault/{id}/restore ────────────────────────────────────────────
+
+func (h *VaultHandler) Restore(w http.ResponseWriter, r *http.Request) {
+	userID, err := h.getUserID(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	entryID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid entry ID")
+		return
+	}
+
+	result, err := h.DB.ExecContext(r.Context(),
+		"UPDATE vault_entries SET deleted_at = NULL WHERE id = ? AND user_id = ? AND deleted_at IS NOT NULL",
+		entryID, userID,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to restore entry")
+		return
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		writeError(w, http.StatusNotFound, "Entry not found or not deleted")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Entry restored"})
+}
+
+// ── DELETE /api/vault/{id}/purge ─────────────────────────────────────────────
+
+func (h *VaultHandler) Purge(w http.ResponseWriter, r *http.Request) {
+	userID, err := h.getUserID(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	entryID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid entry ID")
+		return
+	}
+
+	result, err := h.DB.ExecContext(r.Context(),
+		"DELETE FROM vault_entries WHERE id = ? AND user_id = ?",
+		entryID, userID,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to purge entry")
+		return
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		writeError(w, http.StatusNotFound, "Entry not found")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Entry permanently deleted"})
+}
+
+
+// ── GET /api/vault/trash ──────────────────────────────────────────────────────
+
+func (h *VaultHandler) ListTrashed(w http.ResponseWriter, r *http.Request) {
+	userID, err := h.getUserID(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	rows, err := h.DB.QueryContext(r.Context(),
+		`SELECT ve.id, ve.user_id, ve.category_id, c.name,
+			ve.site_name, COALESCE(ve.site_url, ''),
+			ve.username, ve.encrypted_password,
+			ve.strength_score, ve.is_favorited,
+			COALESCE(ve.notes, ''), ve.created_at, ve.updated_at
+		FROM vault_entries ve
+		JOIN categories c ON c.id = ve.category_id
+		WHERE ve.user_id = ? AND ve.deleted_at IS NOT NULL
+		ORDER BY ve.deleted_at DESC`,
+		userID,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to fetch trashed entries")
+		return
+	}
+	defer rows.Close()
+
+	entries := []models.VaultEntry{}
+	for rows.Next() {
+		var e models.VaultEntry
+		var favInt int
+		if err := rows.Scan(
+			&e.ID, &e.UserID, &e.CategoryID, &e.Category,
+			&e.SiteName, &e.SiteURL, &e.Username, &e.EncryptedPassword,
+			&e.StrengthScore, &favInt, &e.Notes, &e.CreatedAt, &e.UpdatedAt,
+		); err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to read entries")
+			return
+		}
+		e.IsFavorited = favInt == 1
+		entries = append(entries, e)
+	}
+
+	writeJSON(w, http.StatusOK, entries)
+}
+
+// ── PATCH /api/vault/{id}/password ───────────────────────────────────────────
+
+type updatePasswordRequest struct {
+	Password      string `json:"password"`
+	StrengthScore int    `json:"strength_score"`
+}
+
+func (h *VaultHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
+	userID, err := h.getUserID(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	entryID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid entry ID")
+		return
+	}
+
+	var req updatePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if strings.TrimSpace(req.Password) == "" {
+		writeError(w, http.StatusUnprocessableEntity, "Password is required")
+		return
+	}
+
+	result, err := h.DB.ExecContext(r.Context(),
+		`UPDATE vault_entries
+		 SET encrypted_password = ?, strength_score = ?, updated_at = CURRENT_TIMESTAMP
+		 WHERE id = ? AND user_id = ?`,
+		req.Password, req.StrengthScore, entryID, userID,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to update password")
+		return
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		writeError(w, http.StatusNotFound, "Entry not found")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Password updated"})
 }
 
 // ── PATCH /api/vault/{id}/favorite ───────────────────────────────────────────

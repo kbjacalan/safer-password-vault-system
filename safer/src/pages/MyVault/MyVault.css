@@ -460,14 +460,21 @@
   border-radius: 7px;
   border: none;
   background: none;
+  color: var(--text-secondary);
   font-size: 12.5px;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
   text-align: left;
+  white-space: nowrap;
   transition:
     background-color 0.15s ease,
     color 0.15s ease;
+}
+
+.vault-menu-item:not(.vault-menu-item--danger):hover {
+  background-color: var(--soft-blue);
+  color: var(--primary-blue);
 }
 
 .vault-menu-item--danger {
@@ -521,4 +528,187 @@
   .vault-item-password-wrap {
     display: none;
   }
+}
+
+/* Change Password card */
+.vault-changepw-card {
+  background-color: var(--secondary-background);
+  border: 1px solid var(--light-blue);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: menuFadeIn 0.15s ease;
+}
+
+.vault-changepw-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+.vault-changepw-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.vault-changepw-input-wrap {
+  position: relative;
+  flex: 1;
+}
+
+.vault-changepw-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 38px 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border-color);
+  background-color: var(--secondary-background);
+  color: var(--text-main);
+  font-size: 13px;
+  font-family: monospace;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.vault-changepw-input:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.vault-changepw-eye {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+}
+
+.vault-changepw-eye:hover {
+  color: var(--primary-blue);
+}
+
+.vault-changepw-gen {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 38px;
+  border-radius: 9px;
+  border: 1px solid var(--border-color);
+  background-color: var(--soft-blue);
+  color: var(--primary-blue);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.vault-changepw-gen:hover {
+  background-color: var(--active-soft-blue);
+  border-color: var(--primary-blue);
+}
+
+.vault-changepw-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vault-changepw-strength-bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.vault-changepw-strength-bar {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.vault-changepw-strength-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: right;
+}
+
+.vault-changepw-error {
+  font-size: 12px;
+  color: #ef4444;
+  margin: 0;
+}
+
+.vault-changepw-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.vault-changepw-cancel {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: none;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.vault-changepw-cancel:hover:not(:disabled) {
+  background-color: var(--soft-blue);
+}
+
+.vault-changepw-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vault-changepw-save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--primary-blue);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.vault-changepw-save:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.vault-changepw-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

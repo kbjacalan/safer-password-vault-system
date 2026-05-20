@@ -46,8 +46,12 @@ func New(db *sql.DB, jwtSecret string, jwtExpiry int) http.Handler {
 
 	r.Route("/api/vault", func(r chi.Router) {
 		r.Get("/", vault.List)
+		r.Get("/trash", vault.ListTrashed)
 		r.Post("/", vault.Create)
 		r.Delete("/{id}", vault.Delete)
+		r.Patch("/{id}/restore", vault.Restore)
+		r.Delete("/{id}/purge", vault.Purge)
+		r.Patch("/{id}/password", vault.UpdatePassword)
 		r.Patch("/{id}/favorite", vault.ToggleFavorite)
 	})
 

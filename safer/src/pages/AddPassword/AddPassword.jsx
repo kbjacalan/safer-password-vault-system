@@ -15,6 +15,7 @@ import {
 import { useSidebar } from "../../providers/SidebarProvider";
 import { calcStrength, generatePassword } from "../../utils/passwordUtils";
 import { createVaultEntry } from "../../utils/api";
+import toast from "react-hot-toast";
 import "./AddPassword.css";
 
 const CATEGORIES = ["Personal", "Work", "Dev", "Social", "Finance", "Other"];
@@ -85,6 +86,7 @@ const AddPassword = () => {
       });
 
       setSaved(true);
+      toast.success("Password saved to vault!");
       setTimeout(() => navigate("/my-vault"), 1000);
     } catch (err) {
       setApiError(err.message || "Failed to save. Please try again.");

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { PackageSearch, PackagePlus, Menu } from "lucide-react";
+import { PackageSearch, PackagePlus, Trash2, Menu } from "lucide-react";
 import { useSidebar } from "../../providers/SidebarProvider";
 import Logo from "../../assets/logo.png";
 import "./Sidebar.css";
@@ -8,6 +8,7 @@ import "./Sidebar.css";
 const USER_NAV = [
   { to: "/my-vault", icon: PackageSearch, label: "My Vault" },
   { to: "/add-password", icon: PackagePlus, label: "Add Password" },
+  { to: "/trash", icon: Trash2, label: "Trash" },
 ];
 
 const Sidebar = () => {

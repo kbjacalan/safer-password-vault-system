@@ -86,3 +86,43 @@ export async function toggleFavorite(id) {
   if (!res.ok) throw new Error(json.error || "Failed to update favorite");
   return json;
 }
+
+export async function updateVaultPassword(id, { password, strength_score }) {
+  const res = await fetch(`${API_BASE}/api/vault/${id}/password`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ password, strength_score }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "Failed to update password");
+  return json;
+}
+
+export async function fetchTrashedEntries() {
+  const res = await fetch(`${API_BASE}/api/vault/trash`, {
+    headers: authHeaders(),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "Failed to fetch trash");
+  return json;
+}
+
+export async function restoreVaultEntry(id) {
+  const res = await fetch(`${API_BASE}/api/vault/${id}/restore`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "Failed to restore entry");
+  return json;
+}
+
+export async function purgeVaultEntry(id) {
+  const res = await fetch(`${API_BASE}/api/vault/${id}/purge`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "Failed to purge entry");
+  return json;
+}
