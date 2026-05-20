@@ -196,7 +196,7 @@ const PasswordItem = ({ item, onToggleFav, onDelete, onPasswordChanged }) => {
         <div className="vault-changepw-card">
           <div className="vault-changepw-header">
             <KeyRound size={14} />
-            <span>Change Password — {item.site_name}</span>
+            <span>Change Password: {item.site_name}</span>
           </div>
 
           <div className="vault-changepw-row">
